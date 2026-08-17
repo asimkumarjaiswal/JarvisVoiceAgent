@@ -2,7 +2,7 @@
 
 A futuristic, voice-first React single-page application (SPA) powered by Vite that serves as a thin presentation layer over an ASP.NET Core Web API exposing a Microsoft Foundry AI dental receptionist agent.
 
-![AI Neural Core](public/favicon.svg)
+![Main Page](public/mainpage.png)
 
 ---
 

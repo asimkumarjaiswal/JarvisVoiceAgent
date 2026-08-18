@@ -56,10 +56,19 @@ export default function App() {
   const isSendingRef = useRef(false);
 
   /* ── Speech synthesis ─────────────────────────────────────────── */
-  const { speak, stopSpeaking, isSpeaking } = useSpeechSynthesis({
+  const {
+    speak,
+    stopSpeaking,
+    isSpeaking,
+    availableVoiceNames,
+    selectedVoiceName,
+    setSelectedVoiceName,
+    activeVoice,
+  } = useSpeechSynthesis({
     onSpeechEnd: useCallback(() => {
       setAiState(AI_STATE.READY);
     }, []),
+    defaultVoiceName: 'Samantha',
   });
 
   /* ── Speech recognition ───────────────────────────────────────── */
@@ -215,6 +224,10 @@ export default function App() {
         connectionStatus={connectionStatus}
         onNewConversation={handleNewConversation}
         isResetting={isResetting}
+        availableVoiceNames={availableVoiceNames}
+        selectedVoiceName={selectedVoiceName}
+        onSelectVoice={setSelectedVoiceName}
+        activeVoice={activeVoice}
       />
 
       {/* ── Main content ───────────────────────────────────────── */}
@@ -299,8 +312,10 @@ export default function App() {
           conversationId={conversationId}
           agentName={agentName}
           connectionStatus={connectionStatus}
+          activeVoiceName={activeVoice ? activeVoice.name : selectedVoiceName}
         />
       </main>
     </div>
   );
 }
+

@@ -6,14 +6,31 @@
  *   1. Text normalization for speech: Formats phone/mobile numbers (6-12 digits) as
  *      space-separated digits so the speech engine reads them as individual digits
  *      ("8 5 3 6...") instead of large cardinal numbers ("85 crores 36 thousand...").
- *   2. Voice Quality Optimization: Dynamically loads browser voices via `onvoiceschanged`
- *      and prioritizes high-quality Neural, Natural, Google, Microsoft, and Apple voices over
- *      robotic legacy synthesizers.
+ *   2. Preferred Voice Selection & Extraction:
+ *      Exported voice configurations allow setting target voice (e.g. "Samantha" or "Alex")
+ *      both programmatically and via state, with dynamic browser voice extraction.
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 
 const SYNTHESIS_LANGUAGE = 'en-IN';
+const STORAGE_KEY = 'jarvis_voice_preference';
+
+/**
+ * Extracted default list of preferred voices (ordered by priority).
+ * Can be imported and configured across the codebase.
+ */
+export const PREFERRED_VOICE_NAMES = [
+  'Samantha',
+  'Alex',
+  'Google US English',
+  'Microsoft Zira',
+  'Microsoft Jenny',
+  'Karen',
+  'Victoria',
+  'Daniel',
+  'Fred',
+];
 
 /**
  * Prepares raw text specifically for speech output.
@@ -40,14 +57,38 @@ export function prepareSpeechText(text) {
 }
 
 /**
- * Selects the best available natural/human-like voice from the system voice list.
+ * Selects the best available voice based on target voice preference,
+ * fallback preference list (Samantha, Alex...), or general natural quality scoring.
  *
  * @param {SpeechSynthesisVoice[]} voices
+ * @param {string} [targetVoiceName]
  * @returns {SpeechSynthesisVoice|null}
  */
-function selectBestVoice(voices) {
+export function selectBestVoice(voices, targetVoiceName = null) {
   if (!voices || voices.length === 0) return null;
 
+  // 1. Check for explicit target voice selection (e.g. "Samantha" or "Alex")
+  if (targetVoiceName) {
+    const targetLower = targetVoiceName.toLowerCase();
+    const exactMatch = voices.find(
+      (v) => v.name.toLowerCase() === targetLower
+    );
+    if (exactMatch) return exactMatch;
+
+    const partialMatch = voices.find((v) =>
+      v.name.toLowerCase().includes(targetLower)
+    );
+    if (partialMatch) return partialMatch;
+  }
+
+  // 2. Try default priority list (Samantha -> Alex -> Google US English ...)
+  for (const prefName of PREFERRED_VOICE_NAMES) {
+    const prefLower = prefName.toLowerCase();
+    const match = voices.find((v) => v.name.toLowerCase().includes(prefLower));
+    if (match) return match;
+  }
+
+  // 3. General natural/human quality scoring fallback
   const naturalKeywords = ['natural', 'neural', 'online', 'enhanced', 'premium'];
   const providerKeywords = ['google', 'microsoft', 'apple'];
 
@@ -78,20 +119,32 @@ function selectBestVoice(voices) {
 
 /**
  * @typedef {Object} SpeechSynthesisHook
- * @property {(text: string) => void} speak
- * @property {() => void}             stopSpeaking
- * @property {boolean}                isSpeaking
- * @property {boolean}                isSupported
- * @property {SpeechSynthesisVoice[]} voices
+ * @property {(text: string) => void}           speak
+ * @property {() => void}                       stopSpeaking
+ * @property {boolean}                          isSpeaking
+ * @property {boolean}                          isSupported
+ * @property {SpeechSynthesisVoice[]}           voices
+ * @property {string[]}                         availableVoiceNames
+ * @property {string}                           selectedVoiceName
+ * @property {(voiceName: string) => void}      setSelectedVoiceName
+ * @property {SpeechSynthesisVoice|null}        activeVoice
  */
 
 /**
- * @param {{ onSpeechEnd?: () => void }} options
+ * @param {{ onSpeechEnd?: () => void, defaultVoiceName?: string }} options
  * @returns {SpeechSynthesisHook}
  */
-export function useSpeechSynthesis({ onSpeechEnd } = {}) {
+export function useSpeechSynthesis({ onSpeechEnd, defaultVoiceName = 'Samantha' } = {}) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voices, setVoices] = useState([]);
+  const [selectedVoiceName, setSelectedVoiceNameState] = useState(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return saved;
+    }
+    return defaultVoiceName;
+  });
+
   const utteranceRef = useRef(null);
   const onSpeechEndRef = useRef(onSpeechEnd);
 
@@ -100,6 +153,18 @@ export function useSpeechSynthesis({ onSpeechEnd } = {}) {
   }, [onSpeechEnd]);
 
   const isSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
+
+  // Setter for selected voice that also persists to localStorage
+  const setSelectedVoiceName = useCallback((name) => {
+    setSelectedVoiceNameState(name);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      if (name) {
+        localStorage.setItem(STORAGE_KEY, name);
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    }
+  }, []);
 
   // Dynamically load available voices (handles asynchronous voice loading in Chrome/Edge)
   useEffect(() => {
@@ -118,6 +183,10 @@ export function useSpeechSynthesis({ onSpeechEnd } = {}) {
       window.speechSynthesis.onvoiceschanged = loadVoices;
     }
   }, [isSupported]);
+
+  // Determine currently active voice object
+  const activeVoice = selectBestVoice(voices, selectedVoiceName);
+  const availableVoiceNames = voices.map((v) => v.name);
 
   const stopSpeaking = useCallback(() => {
     if (isSupported) {
@@ -150,16 +219,16 @@ export function useSpeechSynthesis({ onSpeechEnd } = {}) {
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
 
-      // Select the best available natural/human voice
+      // Select target voice (e.g. Samantha, Alex, or user-selected voice)
       const currentVoices = voices.length > 0 ? voices : window.speechSynthesis.getVoices();
-      const bestVoice = selectBestVoice(currentVoices);
+      const chosenVoice = selectBestVoice(currentVoices, selectedVoiceName);
 
-      if (bestVoice) {
-        utterance.voice = bestVoice;
+      if (chosenVoice) {
+        utterance.voice = chosenVoice;
       }
 
       utterance.onstart = () => {
-        console.info('[SpeechSynthesis] Speaking...');
+        console.info('[SpeechSynthesis] Speaking with voice:', chosenVoice?.name || 'Default');
         setIsSpeaking(true);
       };
 
@@ -191,7 +260,7 @@ export function useSpeechSynthesis({ onSpeechEnd } = {}) {
         }
       }, 10000);
     },
-    [isSupported, voices]
+    [isSupported, voices, selectedVoiceName]
   );
 
   // Cleanup on unmount
@@ -203,5 +272,16 @@ export function useSpeechSynthesis({ onSpeechEnd } = {}) {
     };
   }, [isSupported]);
 
-  return { speak, stopSpeaking, isSpeaking, isSupported, voices };
+  return {
+    speak,
+    stopSpeaking,
+    isSpeaking,
+    isSupported,
+    voices,
+    availableVoiceNames,
+    selectedVoiceName,
+    setSelectedVoiceName,
+    activeVoice,
+  };
 }
+

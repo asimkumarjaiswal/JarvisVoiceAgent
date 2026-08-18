@@ -1,11 +1,12 @@
 /**
  * AIHeader.jsx
- * Top navigation bar: branding left, connection status right.
- * Includes a tooth SVG icon and "New Conversation" / reset button.
+ * Top navigation bar: branding left, voice selector & connection status right.
+ * Includes a tooth SVG icon, voice selector, and "New Conversation" / reset button.
  */
 
 import React from 'react';
 import StatusIndicator from './StatusIndicator.jsx';
+import VoiceSelector from './VoiceSelector.jsx';
 
 function ToothIcon() {
   return (
@@ -31,6 +32,10 @@ export default function AIHeader({
   connectionStatus,
   onNewConversation,
   isResetting,
+  availableVoiceNames,
+  selectedVoiceName,
+  onSelectVoice,
+  activeVoice,
 }) {
   return (
     <header className="ai-header" role="banner">
@@ -43,6 +48,15 @@ export default function AIHeader({
       </div>
 
       <div className="header-right">
+        {onSelectVoice && (
+          <VoiceSelector
+            availableVoiceNames={availableVoiceNames}
+            selectedVoiceName={selectedVoiceName}
+            onSelectVoice={onSelectVoice}
+            activeVoice={activeVoice}
+          />
+        )}
+
         <button
           className="new-conversation-btn"
           onClick={onNewConversation}

@@ -2,13 +2,13 @@
  * SessionInfo.jsx
  *
  * Expandable technical/session information panel.
- * Displays: Agent, Status, Conversation ID.
+ * Displays: Agent, Status, Active Voice, Conversation ID.
  * NEVER exposes API keys, tokens or secrets.
  */
 
 import React, { useState } from 'react';
 
-export default function SessionInfo({ conversationId, agentName, connectionStatus }) {
+export default function SessionInfo({ conversationId, agentName, connectionStatus, activeVoiceName }) {
   const [expanded, setExpanded] = useState(false);
 
   const statusLabel =
@@ -48,6 +48,10 @@ export default function SessionInfo({ conversationId, agentName, connectionStatu
             <dd>{agentName || '—'}</dd>
           </div>
           <div className="session-row">
+            <dt>Speech Voice</dt>
+            <dd className="session-voice">{activeVoiceName || 'Default'}</dd>
+          </div>
+          <div className="session-row">
             <dt>Status</dt>
             <dd className={`session-status session-status--${connectionStatus}`}>
               {statusLabel}
@@ -70,3 +74,4 @@ export default function SessionInfo({ conversationId, agentName, connectionStatu
     </div>
   );
 }
+

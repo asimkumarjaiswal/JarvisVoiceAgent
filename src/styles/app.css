@@ -178,6 +178,108 @@ body {
   cursor: not-allowed;
 }
 
+/* ─── Voice Selector ─────────────────────────────────────────────────── */
+.voice-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.65rem;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.voice-selector-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.voice-selector-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.725rem;
+  font-family: var(--font-family-display);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.voice-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--primary-cyan);
+}
+
+.voice-pills {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.voice-pill {
+  padding: 0.15rem 0.45rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-family: var(--font-family-body);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.voice-pill:hover {
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--primary-cyan);
+}
+
+.voice-pill--active {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.3), rgba(30, 58, 138, 0.5));
+  border-color: var(--primary-cyan);
+  color: var(--primary-cyan);
+  font-weight: 600;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
+}
+
+.voice-dropdown-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.voice-select {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-family: var(--font-family-body);
+  padding: 0.2rem 0.4rem;
+  outline: none;
+  max-width: 170px;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.voice-select:focus,
+.voice-select:hover {
+  border-color: var(--primary-cyan);
+}
+
+.voice-active-tag {
+  font-size: 0.675rem;
+  color: var(--accent-teal);
+  font-family: var(--font-family-display);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+
 /* ─── Status Indicator Badge ───────────────────────────────────────────── */
 .status-indicator {
   display: inline-flex;
